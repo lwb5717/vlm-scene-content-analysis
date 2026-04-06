@@ -8,18 +8,9 @@ This repository is designed as a simple research artifact:
 - inference: scene attributes, visual complexity, and skin-type analysis
 - output: CSV files, basic figures, and optional paper-analysis CSV exports
 
-## Demo
-
-Start here if you want the fastest overview:
-
-- [DEMO.md](./DEMO.md)
-- [examples/sample_outputs/cid2013](./examples/sample_outputs/cid2013)
-
-### Project Figure
+## Overview
 
 ![Project figure](./figure_scene_content_info.png)
-
-- [PDF version](./figure_scene_content_info.pdf)
 
 ## Features
 
