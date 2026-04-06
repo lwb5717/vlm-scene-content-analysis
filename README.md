@@ -17,7 +17,9 @@ Start here if you want the fastest overview:
 
 ### Project Figure
 
-- [figure_scene_content_info.pdf](./figure_scene_content_info.pdf)
+![Project figure](./figure_scene_content_info.png)
+
+- [PDF version](./figure_scene_content_info.pdf)
 
 ## Features
 

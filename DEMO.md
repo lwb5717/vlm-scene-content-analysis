@@ -6,7 +6,9 @@ This repository supports two demo modes.
 
 Use the project illustration below as the main repository figure:
 
-- [figure_scene_content_info.pdf](./figure_scene_content_info.pdf)
+![Project figure](./figure_scene_content_info.png)
+
+- [PDF version](./figure_scene_content_info.pdf)
 
 ## 1. Zero-Setup Demo
 
