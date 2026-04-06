@@ -15,15 +15,9 @@ Start here if you want the fastest overview:
 - [DEMO.md](./DEMO.md)
 - [examples/sample_outputs/cid2013](./examples/sample_outputs/cid2013)
 
-### Visual Preview
+### Project Figure
 
-#### Scene Distribution
-
-![Scene distribution](examples/sample_outputs/cid2013/figures/scene_type_distribution.png)
-
-#### Skin-Type Distribution
-
-![Skin-type distribution](examples/sample_outputs/cid2013/figures/skin_type_distribution.png)
+- [figure_scene_content_info.pdf](./figure_scene_content_info.pdf)
 
 ## Features
 

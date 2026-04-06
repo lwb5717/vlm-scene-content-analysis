@@ -2,17 +2,11 @@
 
 This repository supports two demo modes.
 
-## Visual Preview
+## Project Figure
 
-The sample outputs below come from the curated `CID2013` example.
+Use the project illustration below as the main repository figure:
 
-### Scene Distribution
-
-![Scene distribution](examples/sample_outputs/cid2013/figures/scene_type_distribution.png)
-
-### Skin-Type Distribution
-
-![Skin-type distribution](examples/sample_outputs/cid2013/figures/skin_type_distribution.png)
+- [figure_scene_content_info.pdf](./figure_scene_content_info.pdf)
 
 ## 1. Zero-Setup Demo
 
@@ -25,7 +19,6 @@ This folder contains:
 - `scene_analysis_results.csv`
 - `complexity_results.csv`
 - `skin_type_results.csv`
-- example figures for scene and skin-type analysis
 - complexity CSV outputs for downstream statistics or custom plotting
 
 You can also inspect the text summary:
