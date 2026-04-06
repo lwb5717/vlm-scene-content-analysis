@@ -43,7 +43,7 @@ DATASET_CONFIG = {
     },
 }
 
-DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "paper_figures" / "cq_cleveland"
+DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "result_gallery" / "cq_cleveland"
 
 SCENE_ORDER = ["natural_landscape", "portrait", "indoor", "urban", "other"]
 DISTANCE_ORDER = ["close", "medium", "far", "unknown"]

@@ -50,7 +50,7 @@ Start here if you want the fastest overview:
   user-facing entry points
 - `examples/sample_outputs/`
   small example outputs kept for GitHub display
-- `result/paper_figures/`
+- `result/result_gallery/`
   curated result gallery for cross-dataset and manuscript-style outputs
 
 ## Setup
@@ -177,7 +177,7 @@ This is intentionally small. The repository keeps representative outputs, not ev
 
 For a broader showcase of project outputs beyond the minimal example, see:
 
-- [result/paper_figures](./result/paper_figures)
+- [result/result_gallery](./result/result_gallery)
 
 This directory now acts as a curated result gallery. It includes both manuscript-facing outputs and additional representative results that help show the full scope of the analysis pipeline.
 

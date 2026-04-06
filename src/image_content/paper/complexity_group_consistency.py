@@ -12,7 +12,7 @@ import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_INPUT_CSV = ROOT_DIR / "result" / "complexity_results_cid2013.csv"
-DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "paper_figures" / "complexity"
+DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "result_gallery" / "complexity"
 
 LEVEL_ORDER = ["low", "medium", "high"]
 LEVEL_TO_INT = {name: idx for idx, name in enumerate(LEVEL_ORDER)}

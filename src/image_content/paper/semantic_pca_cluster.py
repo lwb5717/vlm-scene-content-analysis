@@ -23,7 +23,7 @@ from image_content.common.plot_style import (
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DATASET_NAME = "koniq10k"
 INPUT_CSV = ROOT_DIR / "result" / f"scene_analysis_results_{DATASET_NAME}.csv"
-OUTPUT_DIR = ROOT_DIR / "result" / "paper_figures" / "pca"
+OUTPUT_DIR = ROOT_DIR / "result" / "result_gallery" / "pca"
 JITTER_STD = 0.02
 
 # Scatter plot font configuration

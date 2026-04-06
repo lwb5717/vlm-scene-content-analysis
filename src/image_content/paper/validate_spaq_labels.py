@@ -14,7 +14,7 @@ from image_content.common.plot_style import save_png
 ROOT_DIR = Path(__file__).resolve().parents[3]
 RESULTS_CSV = ROOT_DIR / "result" / "scene_analysis_results_spaq.csv"
 LABELS_XLSX = ROOT_DIR / "Scene category labels.xlsx"
-OUTPUT_DIR = ROOT_DIR / "result" / "paper_figures" / "spaq_scene_correlation"
+OUTPUT_DIR = ROOT_DIR / "result" / "result_gallery" / "spaq_scene_correlation"
 
 # Heatmap font configuration
 HEATMAP_TITLE_FONTSIZE = 26

@@ -26,8 +26,8 @@ scene_analysis_checkpoint.csv
 scene_analysis_results_*test.csv
 
 # Keep curated examples and paper-facing figures instead of all raw outputs
-!result/paper_figures/
-!result/paper_figures/**
-result/paper_figures/**/*.pdf
+!result/result_gallery/
+!result/result_gallery/**
+result/result_gallery/**/*.pdf
 !examples/
 !examples/**
