@@ -10,7 +10,9 @@ This repository is designed as a simple research artifact:
 
 ## Overview
 
-![Project figure](./figure_scene_content_info.png)
+![Scene content figure](./figure_scene_content_info.png)
+
+![Overview workflow](./scene_content_workflow.png)
 
 ## Features
 
