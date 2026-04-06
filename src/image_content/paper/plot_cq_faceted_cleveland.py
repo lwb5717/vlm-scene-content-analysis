@@ -531,7 +531,9 @@ def _plot_overlaid_single(
 def main() -> int:
     _apply_ieee_font()
 
-    parser = argparse.ArgumentParser(description="Plot merged Cleveland dots for CQ complexity metrics.")
+    parser = argparse.ArgumentParser(
+        description="Plot faceted and merged Cleveland dots for CQ complexity metrics."
+    )
     parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
@@ -552,6 +554,16 @@ def main() -> int:
         scene_metrics[dataset_name] = _group_metrics(df, "scene_type", SCENE_ORDER)
         dist_metrics[dataset_name] = _group_metrics(df, "camera_to_object_distance", DISTANCE_ORDER)
 
+    _plot_faceted(
+        scene_metrics,
+        "scene_type",
+        out_dir / "faceted_cleveland_scene_cq_metrics.png",
+    )
+    _plot_faceted(
+        dist_metrics,
+        "camera_to_object_distance",
+        out_dir / "faceted_cleveland_distance_cq_metrics.png",
+    )
     _plot_overlaid_single(
         scene_metrics,
         "Scene Type",
