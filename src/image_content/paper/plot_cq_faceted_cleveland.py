@@ -180,6 +180,24 @@ def _group_metrics(df: pd.DataFrame, group_col: str, group_order: List[str]) -> 
     return pd.DataFrame(rows)
 
 
+def _group_bin_distribution(df: pd.DataFrame, group_col: str, group_order: List[str]) -> pd.DataFrame:
+    rows = []
+    for group in group_order:
+        bins = df.loc[df[group_col] == group, "cq_bin"]
+        pmf = bins.value_counts(normalize=True).reindex(range(1, N_CQ_BINS + 1), fill_value=0.0)
+        counts = bins.value_counts().reindex(range(1, N_CQ_BINS + 1), fill_value=0)
+        for cq_bin in range(1, N_CQ_BINS + 1):
+            rows.append(
+                {
+                    "group": group,
+                    "cq_bin": cq_bin,
+                    "count": int(counts.loc[cq_bin]),
+                    "percentage": float(pmf.loc[cq_bin] * 100.0),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def _pretty_label(value: str) -> str:
     text = str(value).replace("_", " ")
     if text == "natural landscape":
@@ -550,9 +568,55 @@ def main() -> int:
 
     scene_metrics: Dict[str, pd.DataFrame] = {}
     dist_metrics: Dict[str, pd.DataFrame] = {}
+    scene_distributions: List[pd.DataFrame] = []
+    dist_distributions: List[pd.DataFrame] = []
+    metric_rows: List[pd.DataFrame] = []
     for dataset_name, df in merged_by_dataset.items():
         scene_metrics[dataset_name] = _group_metrics(df, "scene_type", SCENE_ORDER)
         dist_metrics[dataset_name] = _group_metrics(df, "camera_to_object_distance", DISTANCE_ORDER)
+        scene_metric_df = scene_metrics[dataset_name].copy()
+        scene_metric_df.insert(0, "dataset", dataset_name)
+        scene_metric_df.insert(1, "group_type", "scene_type")
+        metric_rows.append(scene_metric_df)
+
+        dist_metric_df = dist_metrics[dataset_name].copy()
+        dist_metric_df.insert(0, "dataset", dataset_name)
+        dist_metric_df.insert(1, "group_type", "camera_to_object_distance")
+        metric_rows.append(dist_metric_df)
+
+        scene_dist_df = _group_bin_distribution(df, "scene_type", SCENE_ORDER)
+        scene_dist_df.insert(0, "dataset", dataset_name)
+        scene_dist_df.insert(1, "group_type", "scene_type")
+        scene_distributions.append(scene_dist_df)
+
+        dist_dist_df = _group_bin_distribution(df, "camera_to_object_distance", DISTANCE_ORDER)
+        dist_dist_df.insert(0, "dataset", dataset_name)
+        dist_dist_df.insert(1, "group_type", "camera_to_object_distance")
+        dist_distributions.append(dist_dist_df)
+
+        sample_export = df[
+            [
+                "image_name",
+                "scene_type",
+                "camera_to_object_distance",
+                "quantity_level",
+                "clutter_level",
+                "cq_bin",
+            ]
+        ].copy()
+        sample_export.insert(0, "dataset", dataset_name)
+        sample_export.to_csv(out_dir / f"cq_sample_assignments_{dataset_name.lower().replace(' ', '_').replace('-', '_')}.csv", index=False, encoding="utf-8-sig")
+
+    pd.concat(metric_rows, ignore_index=True).to_csv(
+        out_dir / "cq_group_metrics.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+    pd.concat(scene_distributions + dist_distributions, ignore_index=True).to_csv(
+        out_dir / "cq_group_distributions.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
     _plot_faceted(
         scene_metrics,

@@ -231,6 +231,15 @@ def _plot_scatter(
     plt.close(fig)
 
 
+def _top_contributors(loadings: pd.DataFrame, component: str, top_k: int = 5) -> pd.DataFrame:
+    positive = loadings.nlargest(top_k, component)[["semantic_feature", component]].copy()
+    positive["direction"] = "positive"
+    negative = loadings.nsmallest(top_k, component)[["semantic_feature", component]].copy()
+    negative["direction"] = "negative"
+    result = pd.concat([positive, negative], ignore_index=True)
+    result.insert(0, "component", component)
+    return result
+
 
 def main() -> int:
     _apply_plot_style()
@@ -283,6 +292,28 @@ def main() -> int:
     scaled = scaler.fit_transform(vectors.values)
     pca = PCA(n_components=2, random_state=42)
     points = pca.fit_transform(scaled)
+    pca_coordinates = pd.DataFrame(
+        {
+            id_col: df[id_col] if id_col in df.columns else np.arange(len(df)),
+            "PC1": points[:, 0],
+            "PC2": points[:, 1],
+            "scene_type": df["scene_type"].fillna("unknown"),
+            "lighting_type": df["lighting_type"].fillna("unknown"),
+            "luminance_level": df["luminance_level"].fillna("unknown"),
+            "camera_to_object_distance": df["camera_to_object_distance"].fillna("unknown"),
+            "memory_color_label": df["memory_color_label"].fillna("none"),
+            "semantic_complexity": df["semantic_complexity"],
+        }
+    )
+    pca_coordinates.to_csv(out_dir / "pca_coordinates.csv", index=False, encoding="utf-8-sig")
+    explained_variance = pd.DataFrame(
+        {
+            "component": ["PC1", "PC2"],
+            "explained_variance_ratio": pca.explained_variance_ratio_,
+            "eigenvalue": pca.explained_variance_,
+        }
+    )
+    explained_variance.to_csv(out_dir / "pca_explained_variance.csv", index=False, encoding="utf-8-sig")
     loadings = pd.DataFrame(
         {
             "semantic_feature": vectors.columns,
@@ -294,6 +325,14 @@ def main() -> int:
     loadings["PC2_abs"] = loadings["PC2_loading"].abs()
     loadings_sorted = loadings.sort_values(["PC1_abs", "PC2_abs"], ascending=False)
     loadings_sorted.to_csv(out_dir / "pca_loadings.csv", index=False, encoding="utf-8-sig")
+    top_contributors = pd.concat(
+        [
+            _top_contributors(loadings, "PC1_loading"),
+            _top_contributors(loadings, "PC2_loading"),
+        ],
+        ignore_index=True,
+    )
+    top_contributors.to_csv(out_dir / "pca_top_contributors.csv", index=False, encoding="utf-8-sig")
 
 
     if args.color_by == "scene_type":
