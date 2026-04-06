@@ -51,7 +51,7 @@ Start here if you want the fastest overview:
 - `examples/sample_outputs/`
   small example outputs kept for GitHub display
 - `result/paper_figures/`
-  selected paper-facing CSV/PNG assets
+  curated result gallery for cross-dataset and manuscript-style outputs
 
 ## Setup
 
@@ -172,6 +172,14 @@ See the curated example output directory:
 - [examples/sample_outputs/cid2013](./examples/sample_outputs/cid2013)
 
 This is intentionally small. The repository keeps representative outputs, not every local experimental artifact.
+
+## Result Gallery
+
+For a broader showcase of project outputs beyond the minimal example, see:
+
+- [result/paper_figures](./result/paper_figures)
+
+This directory now acts as a curated result gallery. It includes both manuscript-facing outputs and additional representative results that help show the full scope of the analysis pipeline.
 
 ## Paper Coverage
 
