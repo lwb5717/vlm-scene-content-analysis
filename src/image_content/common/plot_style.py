@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -60,3 +61,9 @@ def build_color_map(
     color_map = {label: color for label, color in zip(dynamic_labels, palette)}
     color_map.update(overrides)
     return color_map
+
+
+def slugify_label(value: str) -> str:
+    text = str(value).strip().lower()
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    return text.strip("_") or "dataset"

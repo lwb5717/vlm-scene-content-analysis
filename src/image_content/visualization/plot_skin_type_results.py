@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png
+from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png, slugify_label
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
@@ -87,49 +87,37 @@ def _load_counts(csv_path: Path) -> pd.Series:
     return pd.Series(labels).value_counts().reindex(ORDER, fill_value=0)
 
 
-def _plot_grouped_bar(
-    counts_by_dataset: Dict[str, pd.Series],
+def _plot_single_bar(
+    counts: pd.Series,
+    dataset_name: str,
     out_png: Path,
     show_zero_labels: bool = True,
 ) -> None:
-    dataset_names = list(counts_by_dataset.keys())
-    dataset_colors = get_palette(len(dataset_names))
-
-    count_table = pd.DataFrame(index=dataset_names, columns=ORDER, dtype=float).fillna(0)
-    for name in dataset_names:
-        count_table.loc[name] = counts_by_dataset[name].reindex(ORDER, fill_value=0)
-
-    pct_table = count_table.div(count_table.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
+    counts = counts.reindex(ORDER, fill_value=0)
+    pct = counts / max(float(counts.sum()), 1.0) * 100.0
+    category_colors = get_palette(len(ORDER))
 
     x = np.arange(len(ORDER))
-    width = 0.8 / max(len(dataset_names), 1)
 
     fig, ax = plt.subplots(figsize=(7.8, 4.2))
-    for i, name in enumerate(dataset_names):
-        offsets = x - 0.4 + (i + 0.5) * width
-        bars = ax.bar(
-            offsets,
-            pct_table.loc[name],
-            width=width,
-            color=dataset_colors[i],
-            label=_dataset_display_name(name),
+    bars = ax.bar(x, pct.values, width=0.72, color=category_colors)
+    for bar, count in zip(bars, counts.values):
+        if count <= 0 and not show_zero_labels:
+            continue
+        y_base = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            y_base + 0.35,
+            f"{int(count)}",
+            ha="center",
+            va="bottom",
+            fontsize=LABEL_VALUE_FONTSIZE,
+            fontweight="bold",
         )
-        for bar, count in zip(bars, count_table.loc[name]):
-            if count <= 0 and not show_zero_labels:
-                continue
-            y_base = bar.get_height()
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                y_base + 0.35 + i * 0.12,
-                f"{int(count)}",
-                ha="center",
-                va="bottom",
-                fontsize=LABEL_VALUE_FONTSIZE,
-                fontweight="bold",
-            )
 
     ax.set_xlabel("skin types", fontweight="bold", fontsize=LABEL_FONTSIZE)
     ax.set_ylabel("percentage (%)", fontweight="bold", fontsize=LABEL_FONTSIZE)
+    ax.set_title(f"{dataset_name}: Skin-Type Distribution", fontweight="bold", fontsize=TITLE_FONTSIZE)
     ax.set_xticks(x)
     ax.set_xticklabels(
         [_pretty_label(v) for v in ORDER],
@@ -141,12 +129,8 @@ def _plot_grouped_bar(
     ax.tick_params(axis="y", labelsize=TICK_FONTSIZE)
     for lbl in ax.get_yticklabels():
         lbl.set_fontweight("bold")
-    ymax = float(pct_table.to_numpy().max())
+    ymax = float(pct.max()) if not pct.empty else 100.0
     ax.set_ylim(0, min(105.0, ymax + 18.0))
-    legend = ax.legend(title="dataset", loc="upper right", frameon=True, fontsize=LEGEND_FONTSIZE)
-    plt.setp(legend.get_title(), fontsize=LEGEND_TITLE_FONTSIZE, fontweight="bold")
-    for txt in legend.get_texts():
-        txt.set_fontweight("bold")
     fig.tight_layout(pad=0.2)
     _save_figure(fig, out_png)
     plt.close(fig)
@@ -183,31 +167,42 @@ def main() -> int:
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    counts_by_dataset: Dict[str, pd.Series] = {}
     for name, path in zip(dataset_names, input_paths):
-        counts_by_dataset[name] = _load_counts(path)
+        counts = _load_counts(path)
+        dataset_slug = slugify_label(name)
+        dataset_dir = out_dir / dataset_slug
+        dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    out_png = out_dir / "skin_type_distribution.png"
-    _plot_grouped_bar(counts_by_dataset, out_png=out_png, show_zero_labels=True)
+        out_png = dataset_dir / "skin_type_distribution.png"
+        _plot_single_bar(counts, name, out_png=out_png, show_zero_labels=True)
 
-    summary = pd.DataFrame(counts_by_dataset).T.reindex(columns=ORDER)
-    summary.index.name = "dataset"
-    summary.reset_index().to_csv(
-        out_dir / "skin_type_counts.csv",
-        index=False,
-        encoding="utf-8-sig",
-    )
-    percentages = summary.div(summary.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
-    percentages.index.name = "dataset"
-    percentages.reset_index().to_csv(
-        out_dir / "skin_type_percentages.csv",
-        index=False,
-        encoding="utf-8-sig",
-    )
+        pd.DataFrame(
+            {
+                "dataset": name,
+                "skin_type": counts.index,
+                "count": counts.astype(int).values,
+            }
+        ).to_csv(
+            dataset_dir / "skin_type_counts.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
+        percentages = counts / max(float(counts.sum()), 1.0) * 100.0
+        pd.DataFrame(
+            {
+                "dataset": name,
+                "skin_type": percentages.index,
+                "percentage": percentages.round(4).values,
+            }
+        ).to_csv(
+            dataset_dir / "skin_type_percentages.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
 
-    print(f"Saved plot to {out_png}")
-    print(f"Saved counts to {out_dir / 'skin_type_counts.csv'}")
-    print(f"Saved percentages to {out_dir / 'skin_type_percentages.csv'}")
+        print(f"Saved plot to {out_png}")
+        print(f"Saved counts to {dataset_dir / 'skin_type_counts.csv'}")
+        print(f"Saved percentages to {dataset_dir / 'skin_type_percentages.csv'}")
     return 0
 
 

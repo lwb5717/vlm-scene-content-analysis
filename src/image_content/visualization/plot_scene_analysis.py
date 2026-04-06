@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png
+from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png, slugify_label
 
 SCENE_TYPE_ORDER = ["natural_landscape", "urban", "indoor", "portrait", "other"]
 LIGHTING_TYPE_ORDER = ["daylight", "artificial", "mixed", "unknown"]
@@ -86,42 +86,36 @@ def _explode_memory_colors(df: pd.DataFrame) -> pd.Series:
     return values
 
 
-def _build_distribution_table(
-    frames: Dict[str, pd.DataFrame],
+def _build_distribution_counts(
+    df: pd.DataFrame,
     column: str,
     order: Iterable[str],
     explode_memory: bool = False,
-) -> pd.DataFrame:
-    counts_by_dataset: Dict[str, pd.Series] = {}
-    categories: List[str] = list(order)
-
-    for name, df in frames.items():
-        if explode_memory:
-            values = _explode_memory_colors(df)
-        else:
-            values = df[column].fillna("unknown").astype(str).str.strip().replace("", "unknown")
-        counts = _normalize_counts(values, order)
-        counts_by_dataset[name] = counts
-        for label in counts.index:
-            if label not in categories:
-                categories.append(label)
-
-    table = pd.DataFrame(index=list(frames.keys()), columns=categories, dtype=float).fillna(0)
-    for name, counts in counts_by_dataset.items():
-        table.loc[name] = counts.reindex(categories, fill_value=0)
-    return table
+) -> pd.Series:
+    if explode_memory:
+        values = _explode_memory_colors(df)
+    else:
+        values = df[column].fillna("unknown").astype(str).str.strip().replace("", "unknown")
+    return _normalize_counts(values, order)
 
 
-def _save_count_and_pct_tables(count_table: pd.DataFrame, stem: str, csv_dir: Path) -> None:
-    pct_table = count_table.div(count_table.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
+def _save_count_and_pct_tables(counts: pd.Series, stem: str, csv_dir: Path, dataset_name: str) -> None:
+    pct = counts / max(float(counts.sum()), 1.0) * 100.0
     csv_dir.mkdir(parents=True, exist_ok=True)
-    count_out = count_table.copy()
-    count_out.index.name = "dataset"
-    count_out.reset_index().to_csv(csv_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
-
-    pct_out = pct_table.round(4)
-    pct_out.index.name = "dataset"
-    pct_out.reset_index().to_csv(csv_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(
+        {
+            "dataset": dataset_name,
+            "category": counts.index,
+            "count": counts.astype(int).values,
+        }
+    ).to_csv(csv_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(
+        {
+            "dataset": dataset_name,
+            "category": pct.index,
+            "percentage": pct.round(4).values,
+        }
+    ).to_csv(csv_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
 
 
 def _build_crosstab(
@@ -141,7 +135,8 @@ def _build_crosstab(
 
 
 def _save_crosstab_bundle(
-    frames: Dict[str, pd.DataFrame],
+    df: pd.DataFrame,
+    dataset_name: str,
     stem: str,
     left_col: str,
     right_col: str,
@@ -152,81 +147,71 @@ def _save_crosstab_bundle(
     explode_right: bool = False,
 ) -> None:
     rows: List[Dict[str, object]] = []
-    for dataset_name, df in frames.items():
-        left_values = _explode_memory_colors(df) if explode_left else df[left_col].fillna("unknown").astype(str).str.strip().replace("", "unknown")
-        right_values = _explode_memory_colors(df) if explode_right else df[right_col].fillna("unknown").astype(str).str.strip().replace("", "unknown")
+    left_values = _explode_memory_colors(df) if explode_left else df[left_col].fillna("unknown").astype(str).str.strip().replace("", "unknown")
+    right_values = _explode_memory_colors(df) if explode_right else df[right_col].fillna("unknown").astype(str).str.strip().replace("", "unknown")
 
-        if explode_left or explode_right:
-            work_df = df.copy()
-            if explode_left:
-                work_df[left_col] = work_df[left_col].fillna("").astype(str).str.split(";")
-                work_df = work_df.explode(left_col)
-                work_df[left_col] = work_df[left_col].astype(str).str.strip()
-                work_df = work_df[work_df[left_col] != ""]
-            if explode_right:
-                work_df[right_col] = work_df[right_col].fillna("").astype(str).str.split(";")
-                work_df = work_df.explode(right_col)
-                work_df[right_col] = work_df[right_col].astype(str).str.strip()
-                work_df = work_df[work_df[right_col] != ""]
-            left_values = work_df[left_col]
-            right_values = work_df[right_col]
+    if explode_left or explode_right:
+        work_df = df.copy()
+        if explode_left:
+            work_df[left_col] = work_df[left_col].fillna("").astype(str).str.split(";")
+            work_df = work_df.explode(left_col)
+            work_df[left_col] = work_df[left_col].astype(str).str.strip()
+            work_df = work_df[work_df[left_col] != ""]
+        if explode_right:
+            work_df[right_col] = work_df[right_col].fillna("").astype(str).str.split(";")
+            work_df = work_df.explode(right_col)
+            work_df[right_col] = work_df[right_col].astype(str).str.strip()
+            work_df = work_df[work_df[right_col] != ""]
+        left_values = work_df[left_col]
+        right_values = work_df[right_col]
 
-        table = _build_crosstab(left_values, right_values, left_order, right_order)
-        row_pct = table.div(table.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
-        for row_label in table.index:
-            for col_label in table.columns:
-                rows.append(
-                    {
-                        "dataset": dataset_name,
-                        "row_category": row_label,
-                        "column_category": col_label,
-                        "count": int(table.loc[row_label, col_label]),
-                        "row_percentage": float(row_pct.loc[row_label, col_label]),
-                    }
-                )
+    table = _build_crosstab(left_values, right_values, left_order, right_order)
+    row_pct = table.div(table.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
+    for row_label in table.index:
+        for col_label in table.columns:
+            rows.append(
+                {
+                    "dataset": dataset_name,
+                    "row_category": row_label,
+                    "column_category": col_label,
+                    "count": int(table.loc[row_label, col_label]),
+                    "row_percentage": float(row_pct.loc[row_label, col_label]),
+                }
+            )
 
     csv_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(csv_dir / f"{stem}.csv", index=False, encoding="utf-8-sig")
 
 
-def _plot_grouped_distribution(
-    count_table: pd.DataFrame,
+def _plot_single_distribution(
+    counts: pd.Series,
+    dataset_name: str,
     title: str,
     out_path: Path,
 ) -> None:
-    pct_table = count_table.div(count_table.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
-    dataset_names = list(count_table.index)
-    categories = list(count_table.columns)
+    total = max(float(counts.sum()), 1.0)
+    pct = counts / total * 100.0
+    categories = list(counts.index)
     x = np.arange(len(categories), dtype=float)
-    width = 0.8 / max(1, len(dataset_names))
-    dataset_colors = get_palette(len(dataset_names))
+    category_colors = get_palette(len(categories))
 
     fig_w = max(7.0, 1.2 * len(categories))
     fig, ax = plt.subplots(figsize=(fig_w, 4.2))
-
-    for idx, name in enumerate(dataset_names):
-        offsets = x - 0.4 + (idx + 0.5) * width
-        bars = ax.bar(
-            offsets,
-            pct_table.loc[name],
-            width=width,
-            color=dataset_colors[idx],
-            label=name,
+    bars = ax.bar(x, pct.values, width=0.72, color=category_colors)
+    for bar, count in zip(bars, counts.values):
+        if count <= 0:
+            continue
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.7,
+            str(int(count)),
+            ha="center",
+            va="bottom",
+            fontsize=COUNT_FONTSIZE,
+            fontweight="bold",
         )
-        for bar, count in zip(bars, count_table.loc[name]):
-            if count <= 0:
-                continue
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + 0.7,
-                str(int(count)),
-                ha="center",
-                va="bottom",
-                fontsize=COUNT_FONTSIZE,
-                fontweight="bold",
-            )
 
-    ax.set_title(title, fontsize=TITLE_FONTSIZE, fontweight="bold")
+    ax.set_title(f"{dataset_name}: {title}", fontsize=TITLE_FONTSIZE, fontweight="bold")
     ax.set_ylabel("percentage (%)", fontsize=LABEL_FONTSIZE, fontweight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels(
@@ -239,14 +224,10 @@ def _plot_grouped_distribution(
     ax.tick_params(axis="y", labelsize=TICK_FONTSIZE)
     for label in ax.get_yticklabels():
         label.set_fontweight("bold")
-    ymax = float(pct_table.to_numpy().max()) if not pct_table.empty else 100.0
+    ymax = float(pct.max()) if not pct.empty else 100.0
     ax.set_ylim(0, min(100.0, ymax + 18.0))
     ax.grid(axis="y", color="#E6E6E6", linewidth=0.8)
     ax.set_axisbelow(True)
-    legend = ax.legend(title="dataset", frameon=True, fontsize=LEGEND_FONTSIZE)
-    plt.setp(legend.get_title(), fontsize=LEGEND_FONTSIZE, fontweight="bold")
-    for text in legend.get_texts():
-        text.set_fontweight("bold")
 
     fig.tight_layout()
     _save_figure(fig, out_path)
@@ -283,7 +264,6 @@ def main() -> int:
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    csv_dir = out_dir / "csv"
     frames = _load_frames(input_paths, dataset_names)
 
     plot_specs = [
@@ -300,49 +280,59 @@ def main() -> int:
         ("memory_color", MEMORY_COLOR_ORDER, "Memory Color Distribution", "memory_color_distribution.png", True),
     ]
 
-    for column, order, title, filename, explode_memory in plot_specs:
-        table = _build_distribution_table(frames, column, order, explode_memory=explode_memory)
-        _plot_grouped_distribution(table, title, out_dir / filename)
-        _save_count_and_pct_tables(table, filename.replace(".png", ""), csv_dir)
+    for dataset_name, df in frames.items():
+        dataset_slug = slugify_label(dataset_name)
+        dataset_dir = out_dir / dataset_slug
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        csv_dir = dataset_dir / "csv"
 
-    _save_crosstab_bundle(
-        frames,
-        "lighting_luminance",
-        "lighting_type",
-        "luminance_level",
-        LIGHTING_TYPE_ORDER,
-        LUMINANCE_LEVEL_ORDER,
-        csv_dir,
-    )
-    _save_crosstab_bundle(
-        frames,
-        "scene_camera_distance",
-        "scene_type",
-        "camera_to_object_distance",
-        SCENE_TYPE_ORDER,
-        CAMERA_DISTANCE_ORDER,
-        csv_dir,
-    )
-    _save_crosstab_bundle(
-        frames,
-        "scene_memory_color",
-        "scene_type",
-        "memory_color",
-        SCENE_TYPE_ORDER,
-        MEMORY_COLOR_ORDER,
-        csv_dir,
-        explode_right=True,
-    )
-    _save_crosstab_bundle(
-        frames,
-        "memory_color_luminance",
-        "memory_color",
-        "luminance_level",
-        MEMORY_COLOR_ORDER,
-        LUMINANCE_LEVEL_ORDER,
-        csv_dir,
-        explode_left=True,
-    )
+        for column, order, title, filename, explode_memory in plot_specs:
+            counts = _build_distribution_counts(df, column, order, explode_memory=explode_memory)
+            _plot_single_distribution(counts, dataset_name, title, dataset_dir / filename)
+            _save_count_and_pct_tables(counts, filename.replace(".png", ""), csv_dir, dataset_name)
+
+        _save_crosstab_bundle(
+            df,
+            dataset_name,
+            "lighting_luminance",
+            "lighting_type",
+            "luminance_level",
+            LIGHTING_TYPE_ORDER,
+            LUMINANCE_LEVEL_ORDER,
+            csv_dir,
+        )
+        _save_crosstab_bundle(
+            df,
+            dataset_name,
+            "scene_camera_distance",
+            "scene_type",
+            "camera_to_object_distance",
+            SCENE_TYPE_ORDER,
+            CAMERA_DISTANCE_ORDER,
+            csv_dir,
+        )
+        _save_crosstab_bundle(
+            df,
+            dataset_name,
+            "scene_memory_color",
+            "scene_type",
+            "memory_color",
+            SCENE_TYPE_ORDER,
+            MEMORY_COLOR_ORDER,
+            csv_dir,
+            explode_right=True,
+        )
+        _save_crosstab_bundle(
+            df,
+            dataset_name,
+            "memory_color_luminance",
+            "memory_color",
+            "luminance_level",
+            MEMORY_COLOR_ORDER,
+            LUMINANCE_LEVEL_ORDER,
+            csv_dir,
+            explode_left=True,
+        )
 
     return 0
 
