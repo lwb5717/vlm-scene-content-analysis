@@ -48,6 +48,8 @@ Start here if you want the fastest overview:
   core task implementations for scene, complexity, and skin-type inference
 - `src/image_content/visualization/`
   plotting implementations
+- `src/image_content/paper/`
+  paper-specific analyses such as SPAQ validation, PCA, and CQ plots
 - `scripts/`
   user-facing entry points
 - `examples/sample_outputs/`
@@ -113,6 +115,16 @@ python scripts/plot_complexity_results.py --inputs "outputs/complexity_results.c
 python scripts/plot_skin_type_results.py --inputs "outputs/skin_type_results.csv" --dataset-names "MyDataset" --output-dir "outputs/skin_type_figures"
 ```
 
+### 5. Paper-specific analyses
+
+These scripts correspond to analyses discussed in the manuscript and expect the relevant dataset-level CSV files to exist under `result/`.
+
+```bash
+python scripts/run_spaq_validation.py
+python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv"
+python scripts/plot_cq_cleveland.py
+```
+
 ## Main Tasks
 
 - scene attribute extraction
@@ -140,6 +152,20 @@ See the curated example output directory:
 - [examples/sample_outputs/cid2013](./examples/sample_outputs/cid2013)
 
 This is intentionally small. The repository keeps representative outputs, not every local experimental artifact.
+
+## Paper Coverage
+
+This repository now includes the executable code and retained figures for:
+
+- closed-set scene attribute annotation
+- visual complexity annotation
+- skin-type analysis
+- cross-dataset attribute plots
+- SPAQ validation
+- semantic PCA exports and plots
+- CQ Cleveland plots
+
+The low-level descriptor analysis discussed in the manuscript is not yet included as an executable pipeline in this repository snapshot.
 
 ## Notes
 

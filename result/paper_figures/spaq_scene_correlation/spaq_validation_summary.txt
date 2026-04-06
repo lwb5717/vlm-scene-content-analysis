@@ -1,0 +1,10 @@
+overall_core_accuracy=0.8413123595505617
+per_label_accuracy:
+label
+Cityscape       0.708315
+Human           0.917124
+Indoor scene    0.907146
+Landscape       0.878472
+Plant           0.795506
+Night scene     0.783281
+Still-life      0.737708
