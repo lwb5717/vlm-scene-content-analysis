@@ -8,10 +8,9 @@ if str(SRC_DIR) not in sys.path:
 
 
 def main() -> int:
-    from image_content.paper.semantic_pca_cluster import main as run_main
+    from image_content.advanced_analysis.semantic_pca_cluster import main as run_main
     return run_main()
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

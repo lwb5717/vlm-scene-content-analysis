@@ -8,11 +8,10 @@ if str(SRC_DIR) not in sys.path:
 
 
 def main() -> int:
-    from image_content.paper.validate_spaq_labels import main as run_main
+    from image_content.advanced_analysis.validate_spaq_labels import main as run_main
     run_main()
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

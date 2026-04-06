@@ -44,8 +44,8 @@ Start here if you want the fastest overview:
   core task implementations for scene, complexity, and skin-type inference
 - `src/image_content/visualization/`
   plotting implementations
-- `src/image_content/paper/`
-  paper-specific analyses such as SPAQ validation, PCA, CQ, and complexity-consistency validation
+- `src/image_content/advanced_analysis/`
+  optional advanced analyses such as SPAQ validation, PCA, CQ, and complexity-consistency validation
 - `scripts/`
   user-facing entry points
 - `examples/sample_outputs/`
