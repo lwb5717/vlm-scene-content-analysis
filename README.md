@@ -111,39 +111,18 @@ python scripts/plot_complexity_results.py --inputs "outputs/complexity_results.c
 python scripts/plot_skin_type_results.py --inputs "outputs/skin_type_results.csv" --dataset-names "MyDataset" --output-dir "outputs/skin_type_figures"
 ```
 
-### 5. Optional paper analyses
+### 5. Optional Advanced Analyses
 
-Run these only after you have already generated the dataset-level inference CSVs.
-If your outputs were written somewhere else, copy or rename them into the filenames below before running the manuscript analyses.
+After you have generated scene or complexity CSV results, you can optionally run the more advanced analyses used in our study, such as:
 
-For the manuscript-style analyses, the repository expects these files under `result/`:
+- semantic PCA
+- CQ-based grouped complexity analysis
+- complexity consistency validation
+- SPAQ label validation
 
-- `result/scene_analysis_results_spaq.csv`
-- `result/scene_analysis_results_koniq10k.csv`
-- `result/scene_analysis_results_livewild.csv`
-- `result/scene_analysis_results_cid2013.csv`
-- `result/complexity_results_spaq.csv`
-- `result/complexity_results_koniq10k.csv`
-- `result/complexity_results_live.csv`
-- `result/complexity_results_cid2013.csv`
-- `Scene category labels.xlsx` for the SPAQ validation step
+These scripts are provided as reusable examples of downstream analysis. They are not required for the basic pipeline, and users do not need to reproduce our exact study setup.
 
-By default, the paper-analysis scripts export CSV/TXT only. Add `--with-plots` only if you also want figures.
-
-```bash
-python scripts/run_spaq_validation.py
-python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv"
-python scripts/run_complexity_group_consistency.py --input "result/complexity_results_cid2013.csv"
-python scripts/plot_cq_cleveland.py
-```
-
-Optional plot rendering:
-
-```bash
-python scripts/run_spaq_validation.py --with-plots
-python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv" --with-plots
-python scripts/plot_cq_cleveland.py --with-plots
-```
+Most users can stop after the inference and basic plotting steps above.
 
 ## Main Tasks
 
