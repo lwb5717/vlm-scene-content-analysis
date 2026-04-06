@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Build multi-hot semantic vectors from scene analysis CSV, run PCA + KMeans,
-and export vector matrix and plots.
+and export vector matrix and CSV summaries.
 """
 
 import argparse
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -19,7 +17,6 @@ from sklearn.preprocessing import StandardScaler
 from image_content.common.plot_style import (
     NEUTRAL_GREY,
     build_color_map,
-    get_palette,
     save_png,
 )
 
@@ -54,6 +51,8 @@ MEMORY_COLORS = [
 ]
 
 def _apply_plot_style() -> None:
+    import matplotlib.pyplot as plt
+
     plt.rcParams["font.weight"] = "bold"
     plt.rcParams["axes.labelweight"] = "bold"
     plt.rcParams["axes.titleweight"] = "bold"
@@ -146,6 +145,9 @@ def _plot_scatter(
     out_path: Path,
     color_map: Optional[Dict[str, str]] = None,
 ) -> None:
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
     fig, ax = plt.subplots(figsize=(7, 4.3))
     rng = np.random.default_rng(42)
     jitter = rng.normal(loc=0.0, scale=JITTER_STD, size=points.shape)
@@ -217,8 +219,6 @@ def _top_contributors(loadings: pd.DataFrame, component: str, top_k: int = 5) ->
 
 
 def main() -> int:
-    _apply_plot_style()
-
     parser = argparse.ArgumentParser(description="PCA + KMeans on semantic vectors.")
     parser.add_argument(
         "--input",
@@ -228,7 +228,7 @@ def main() -> int:
     parser.add_argument(
         "--output-dir",
         default=str(OUTPUT_DIR),
-        help="Output directory for vectors and plots.",
+        help="Output directory for CSV exports and optional plots.",
     )
     parser.add_argument(
         "--color-by",
@@ -241,6 +241,11 @@ def main() -> int:
         type=int,
         default=4,
         help="KMeans k (suggested 3-6).",
+    )
+    parser.add_argument(
+        "--with-plots",
+        action="store_true",
+        help="Also render PCA scatter plots. By default this script exports CSV only.",
     )
     args = parser.parse_args()
 
@@ -308,67 +313,6 @@ def main() -> int:
     )
     top_contributors.to_csv(out_dir / "pca_top_contributors.csv", index=False, encoding="utf-8-sig")
 
-    scene_color_map = build_color_map(
-        df["scene_type"].fillna("unknown").astype(str),
-        preferred_order=SCENE_TYPES + ["unknown"],
-        overrides={"unknown": NEUTRAL_GREY},
-    )
-    lighting_color_map = build_color_map(
-        df["lighting_type"].fillna("unknown").astype(str),
-        preferred_order=LIGHTING_TYPES + ["unknown"],
-        overrides={"unknown": NEUTRAL_GREY},
-    )
-    distance_color_map = build_color_map(
-        df["camera_to_object_distance"].fillna("unknown").astype(str),
-        preferred_order=CAMERA_DISTANCES + ["unknown"],
-        overrides={"unknown": NEUTRAL_GREY},
-    )
-    memory_color_map = build_color_map(
-        df["memory_color_label"].fillna("none").astype(str),
-        preferred_order=MEMORY_COLORS + ["multi"],
-        overrides={"none": NEUTRAL_GREY, "unknown": NEUTRAL_GREY},
-    )
-
-    if args.color_by == "scene_type":
-        labels = df["scene_type"].fillna("unknown")
-        _plot_scatter(
-            points,
-            labels,
-            "Semantic PCA (colored by scene_type)",
-            out_dir / "pca_scene_type.png",
-            color_map=scene_color_map,
-        )
-    else:
-        labels = df["semantic_complexity"]
-        _plot_scatter(
-            points,
-            labels,
-            "Semantic PCA (colored by semantic_complexity)",
-            out_dir / "pca_semantic_complexity.png",
-        )
-
-    _plot_scatter(
-        points,
-        df["lighting_type"].fillna("unknown"),
-        "Semantic PCA (colored by lighting_type)",
-        out_dir / "pca_lighting_type.png",
-        color_map=lighting_color_map,
-    )
-    _plot_scatter(
-        points,
-        df["camera_to_object_distance"].fillna("unknown"),
-        "Semantic PCA (colored by camera_to_object_distance)",
-        out_dir / "pca_camera_distance.png",
-        color_map=distance_color_map,
-    )
-    _plot_scatter(
-        points,
-        df["memory_color_label"].fillna("none"),
-        "Semantic PCA (colored by memory_color)",
-        out_dir / "pca_memory_color.png",
-        color_map=memory_color_map,
-    )
-
     kmeans = KMeans(n_clusters=args.k, random_state=42, n_init=10)
     cluster_labels = kmeans.fit_predict(scaled)
     pca_coordinates["kmeans_cluster"] = cluster_labels
@@ -381,7 +325,70 @@ def main() -> int:
         index=False,
         encoding="utf-8-sig",
     )
-    _plot_scatter(points, cluster_labels, f"PCA with KMeans (k={args.k})", out_dir / "pca_kmeans.png")
+
+    if args.with_plots:
+        _apply_plot_style()
+        scene_color_map = build_color_map(
+            df["scene_type"].fillna("unknown").astype(str),
+            preferred_order=SCENE_TYPES + ["unknown"],
+            overrides={"unknown": NEUTRAL_GREY},
+        )
+        lighting_color_map = build_color_map(
+            df["lighting_type"].fillna("unknown").astype(str),
+            preferred_order=LIGHTING_TYPES + ["unknown"],
+            overrides={"unknown": NEUTRAL_GREY},
+        )
+        distance_color_map = build_color_map(
+            df["camera_to_object_distance"].fillna("unknown").astype(str),
+            preferred_order=CAMERA_DISTANCES + ["unknown"],
+            overrides={"unknown": NEUTRAL_GREY},
+        )
+        memory_color_map = build_color_map(
+            df["memory_color_label"].fillna("none").astype(str),
+            preferred_order=MEMORY_COLORS + ["multi"],
+            overrides={"none": NEUTRAL_GREY, "unknown": NEUTRAL_GREY},
+        )
+
+        if args.color_by == "scene_type":
+            labels = df["scene_type"].fillna("unknown")
+            _plot_scatter(
+                points,
+                labels,
+                "Semantic PCA (colored by scene_type)",
+                out_dir / "pca_scene_type.png",
+                color_map=scene_color_map,
+            )
+        else:
+            labels = df["semantic_complexity"]
+            _plot_scatter(
+                points,
+                labels,
+                "Semantic PCA (colored by semantic_complexity)",
+                out_dir / "pca_semantic_complexity.png",
+            )
+
+        _plot_scatter(
+            points,
+            df["lighting_type"].fillna("unknown"),
+            "Semantic PCA (colored by lighting_type)",
+            out_dir / "pca_lighting_type.png",
+            color_map=lighting_color_map,
+        )
+        _plot_scatter(
+            points,
+            df["camera_to_object_distance"].fillna("unknown"),
+            "Semantic PCA (colored by camera_to_object_distance)",
+            out_dir / "pca_camera_distance.png",
+            color_map=distance_color_map,
+        )
+        _plot_scatter(
+            points,
+            df["memory_color_label"].fillna("none"),
+            "Semantic PCA (colored by memory_color)",
+            out_dir / "pca_memory_color.png",
+            color_map=memory_color_map,
+        )
+        _plot_scatter(points, cluster_labels, f"PCA with KMeans (k={args.k})", out_dir / "pca_kmeans.png")
 
     return 0
 

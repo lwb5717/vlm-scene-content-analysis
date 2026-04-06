@@ -1,12 +1,12 @@
 # Image Content Analysis
 
-Run a vision-language model on your own image dataset, export structured CSV results, and generate paper-style figures from those results.
+Run a vision-language model on your own image dataset, export structured CSV results, and optionally generate basic figures from those results.
 
 This repository is designed as a simple research artifact:
 
 - input: an image directory
 - inference: scene attributes, visual complexity, and skin-type analysis
-- output: CSV files and summary figures
+- output: CSV files, basic figures, and optional paper-analysis CSV exports
 
 ## Demo
 
@@ -49,7 +49,7 @@ Start here if you want the fastest overview:
 - `src/image_content/visualization/`
   plotting implementations
 - `src/image_content/paper/`
-  paper-specific analyses such as SPAQ validation, PCA, and CQ plots
+  paper-specific analyses such as SPAQ validation, PCA, CQ, and complexity-consistency validation
 - `scripts/`
   user-facing entry points
 - `examples/sample_outputs/`
@@ -115,15 +115,38 @@ python scripts/plot_complexity_results.py --inputs "outputs/complexity_results.c
 python scripts/plot_skin_type_results.py --inputs "outputs/skin_type_results.csv" --dataset-names "MyDataset" --output-dir "outputs/skin_type_figures"
 ```
 
-### 5. Paper-specific analyses
+### 5. Optional paper analyses
 
-These scripts correspond to analyses discussed in the manuscript and expect the relevant dataset-level CSV files to exist under `result/`.
+Run these only after you have already generated the dataset-level inference CSVs.
+If your outputs were written somewhere else, copy or rename them into the filenames below before running the manuscript analyses.
+
+For the manuscript-style analyses, the repository expects these files under `result/`:
+
+- `result/scene_analysis_results_spaq.csv`
+- `result/scene_analysis_results_koniq10k.csv`
+- `result/scene_analysis_results_livewild.csv`
+- `result/scene_analysis_results_cid2013.csv`
+- `result/complexity_results_spaq.csv`
+- `result/complexity_results_koniq10k.csv`
+- `result/complexity_results_live.csv`
+- `result/complexity_results_cid2013.csv`
+- `Scene category labels.xlsx` for the SPAQ validation step
+
+By default, the paper-analysis scripts export CSV/TXT only. Add `--with-plots` only if you also want figures.
 
 ```bash
 python scripts/run_spaq_validation.py
 python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv"
 python scripts/run_complexity_group_consistency.py --input "result/complexity_results_cid2013.csv"
 python scripts/plot_cq_cleveland.py
+```
+
+Optional plot rendering:
+
+```bash
+python scripts/run_spaq_validation.py --with-plots
+python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv" --with-plots
+python scripts/plot_cq_cleveland.py --with-plots
 ```
 
 ## Main Tasks
@@ -164,8 +187,8 @@ This repository now includes the executable code and retained figures for:
 - cross-dataset attribute plots
 - SPAQ validation
 - CID2013 complexity group-consistency analysis
-- semantic PCA exports and plots
-- CQ Cleveland plots
+- semantic PCA exports
+- CQ complexity exports
 
 The low-level descriptor analysis discussed in the manuscript is not yet included as an executable pipeline in this repository snapshot.
 

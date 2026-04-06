@@ -7,7 +7,6 @@ import argparse
 from pathlib import Path
 from typing import Dict, List
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from image_content.common.plot_style import save_png
@@ -108,16 +107,21 @@ def _score_binary(pred: pd.Series, label: pd.Series) -> Dict[str, float]:
     }
 
 
-def _save_figure(fig: plt.Figure, out_path: Path) -> None:
+def _save_figure(fig, out_path: Path) -> None:
     save_png(fig, out_path, pad_inches=0.02)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate SPAQ labels and export charts.")
+    parser = argparse.ArgumentParser(description="Validate SPAQ labels and export CSV summaries.")
     parser.add_argument(
         "--output-dir",
         default=str(OUTPUT_DIR),
         help="Directory to write outputs.",
+    )
+    parser.add_argument(
+        "--with-plots",
+        action="store_true",
+        help="Also render validation plots. By default this script exports CSV/TXT only.",
     )
     args = parser.parse_args()
 
@@ -166,37 +170,20 @@ def main() -> None:
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     score_df.to_csv(out_dir / "spaq_validation_scores.csv", encoding="utf-8-sig")
+    label_weights.rename_axis("label").reset_index(name="sum_of_label_weights").to_csv(
+        out_dir / "spaq_label_distribution.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
     core_labels = list(CORE_MAP.keys())
     overall = score_df.loc[core_labels]["accuracy"].mean()
-
-    plt.figure(figsize=(8, 4))
-    score_df["accuracy"].plot(kind="bar", color="#4C72B0")
-    plt.axhline(overall, color="#DD8452", linestyle="--", linewidth=1.5, label="core_avg")
-    plt.title("SPAQ Validation Accuracy by Label")
-    plt.xlabel("label")
-    plt.ylabel("accuracy")
-    plt.xticks(rotation=45, ha="right")
-    plt.legend()
-    plt.tight_layout()
-    _save_figure(plt.gcf(), out_dir / "spaq_validation_accuracy.png")
-    plt.close()
 
     with (out_dir / "spaq_validation_summary.txt").open("w", encoding="utf-8") as f:
         f.write(f"overall_core_accuracy={overall}\n")
         f.write("per_label_accuracy:\n")
         f.write(score_df["accuracy"].to_string())
         f.write("\n")
-
-    plt.figure(figsize=(8, 4))
-    label_weights.plot(kind="bar", color="#4C72B0")
-    plt.title("SPAQ Official Label Distribution")
-    plt.xlabel("label")
-    plt.ylabel("sum of label weights")
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
-    _save_figure(plt.gcf(), out_dir / "spaq_label_distribution.png")
-    plt.close()
 
     corr_labels = {}
     corr_preds = {}
@@ -205,40 +192,66 @@ def main() -> None:
         corr_preds[f"pred_{label_col}"] = merged[f"pred_{pred_key}"]
     corr_df = pd.DataFrame({**corr_preds, **corr_labels})
     corr_matrix = corr_df.corr()
-    fig, ax = plt.subplots(figsize=(10, 8))
-    hm = ax.imshow(corr_matrix, cmap=HEATMAP_CMAP, vmin=-1, vmax=1)
-    cbar = fig.colorbar(hm, ax=ax)
-    cbar.set_label("correlation", fontsize=HEATMAP_COLORBAR_LABEL_FONTSIZE, fontweight="bold")
-    cbar.ax.tick_params(labelsize=HEATMAP_COLORBAR_TICK_FONTSIZE)
-    for lbl in cbar.ax.get_yticklabels():
-        lbl.set_fontweight("bold")
+    corr_matrix.to_csv(out_dir / "spaq_validation_correlation.csv", encoding="utf-8-sig")
 
-    ax.set_xticks(range(len(corr_matrix.columns)))
-    ax.set_xticklabels(
-        corr_matrix.columns,
-        rotation=HEATMAP_TICK_ROTATION,
-        ha="right",
-        fontsize=HEATMAP_TICK_FONTSIZE,
-        fontweight="bold",
-    )
-    ax.set_yticks(range(len(corr_matrix.index)))
-    ax.set_yticklabels(
-        corr_matrix.index,
-        rotation=HEATMAP_TICK_ROTATION,
-        ha="right",
-        va="center",
-        rotation_mode="anchor",
-        fontsize=HEATMAP_TICK_FONTSIZE,
-        fontweight="bold",
-    )
-    fig.tight_layout()
-    _save_figure(fig, out_dir / "spaq_validation_correlation.png")
-    plt.close(fig)
+    if args.with_plots:
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(8, 4))
+        score_df["accuracy"].plot(kind="bar", color="#4C72B0")
+        plt.axhline(overall, color="#DD8452", linestyle="--", linewidth=1.5, label="core_avg")
+        plt.title("SPAQ Validation Accuracy by Label")
+        plt.xlabel("label")
+        plt.ylabel("accuracy")
+        plt.xticks(rotation=45, ha="right")
+        plt.legend()
+        plt.tight_layout()
+        _save_figure(plt.gcf(), out_dir / "spaq_validation_accuracy.png")
+        plt.close()
+
+        plt.figure(figsize=(8, 4))
+        label_weights.plot(kind="bar", color="#4C72B0")
+        plt.title("SPAQ Official Label Distribution")
+        plt.xlabel("label")
+        plt.ylabel("sum of label weights")
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
+        _save_figure(plt.gcf(), out_dir / "spaq_label_distribution.png")
+        plt.close()
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        hm = ax.imshow(corr_matrix, cmap=HEATMAP_CMAP, vmin=-1, vmax=1)
+        cbar = fig.colorbar(hm, ax=ax)
+        cbar.set_label("correlation", fontsize=HEATMAP_COLORBAR_LABEL_FONTSIZE, fontweight="bold")
+        cbar.ax.tick_params(labelsize=HEATMAP_COLORBAR_TICK_FONTSIZE)
+        for lbl in cbar.ax.get_yticklabels():
+            lbl.set_fontweight("bold")
+
+        ax.set_xticks(range(len(corr_matrix.columns)))
+        ax.set_xticklabels(
+            corr_matrix.columns,
+            rotation=HEATMAP_TICK_ROTATION,
+            ha="right",
+            fontsize=HEATMAP_TICK_FONTSIZE,
+            fontweight="bold",
+        )
+        ax.set_yticks(range(len(corr_matrix.index)))
+        ax.set_yticklabels(
+            corr_matrix.index,
+            rotation=HEATMAP_TICK_ROTATION,
+            ha="right",
+            va="center",
+            rotation_mode="anchor",
+            fontsize=HEATMAP_TICK_FONTSIZE,
+            fontweight="bold",
+        )
+        fig.tight_layout()
+        _save_figure(fig, out_dir / "spaq_validation_correlation.png")
+        plt.close(fig)
 
     print(f"Saved scores to {out_dir / 'spaq_validation_scores.csv'}")
-    print(f"Saved chart to {out_dir / 'spaq_validation_accuracy.png'}")
-    print(f"Saved label distribution to {out_dir / 'spaq_label_distribution.png'}")
-    print(f"Saved correlation heatmap to {out_dir / 'spaq_validation_correlation.png'}")
+    print(f"Saved label distribution CSV to {out_dir / 'spaq_label_distribution.csv'}")
+    print(f"Saved correlation CSV to {out_dir / 'spaq_validation_correlation.csv'}")
 
 
 if __name__ == "__main__":

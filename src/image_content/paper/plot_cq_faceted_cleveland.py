@@ -13,12 +13,8 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import colors as mcolors
-from matplotlib.lines import Line2D
-import matplotlib.patheffects as pe
 
 from image_content.common.plot_style import (
     NEUTRAL_GREY,
@@ -79,11 +75,13 @@ ENTROPY_LABEL = "H(CQ) (norm)"
 
 
 def _apply_ieee_font() -> None:
+    import matplotlib.pyplot as plt
+
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif"]
 
 
-def _save_figure(fig: plt.Figure, out_path: Path) -> None:
+def _save_figure(fig, out_path: Path) -> None:
     save_png(fig, out_path, pad_inches=0.02)
 
 
@@ -209,6 +207,8 @@ def _pretty_group_title(value: str) -> str:
 
 
 def _shade_dataset_color(base_color: str, kind: str) -> str:
+    from matplotlib import colors as mcolors
+
     rgb = np.array(mcolors.to_rgb(base_color), dtype=float)
     if kind == "mean":
         # Slightly darker for E[CQ]
@@ -227,6 +227,8 @@ def _plot_faceted(
     group_col_title: str,
     out_path: Path,
 ) -> None:
+    import matplotlib.pyplot as plt
+
     pretty_group = _pretty_group_title(group_col_title)
     dataset_names = list(metric_tables.keys())
     fig, axes = plt.subplots(2, 2, figsize=(12.2, 7.8), sharex=True)
@@ -343,6 +345,10 @@ def _plot_overlaid_single(
     out_path: Path,
     dataset_color_map: Dict[str, str],
 ) -> None:
+    import matplotlib.pyplot as plt
+    import matplotlib.patheffects as pe
+    from matplotlib.lines import Line2D
+
     dataset_names = list(metric_tables.keys())
     fig, ax = plt.subplots(figsize=(9.0, 5.2))
 
@@ -546,15 +552,18 @@ def _plot_overlaid_single(
 
 
 def main() -> int:
-    _apply_ieee_font()
-
     parser = argparse.ArgumentParser(
-        description="Plot faceted and merged Cleveland dots for CQ complexity metrics."
+        description="Export CQ complexity statistics and optional figures."
     )
     parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
-        help="Directory to write plots.",
+        help="Directory to write CSV exports and optional plots.",
+    )
+    parser.add_argument(
+        "--with-plots",
+        action="store_true",
+        help="Also render CQ figures. By default this script exports CSV only.",
     )
     args = parser.parse_args()
 
@@ -619,28 +628,30 @@ def main() -> int:
         encoding="utf-8-sig",
     )
 
-    _plot_faceted(
-        scene_metrics,
-        "scene_type",
-        out_dir / "faceted_cleveland_scene_cq_metrics.png",
-    )
-    _plot_faceted(
-        dist_metrics,
-        "camera_to_object_distance",
-        out_dir / "faceted_cleveland_distance_cq_metrics.png",
-    )
-    _plot_overlaid_single(
-        scene_metrics,
-        "Scene Type",
-        out_dir / "merged_cleveland_scene_cq_metrics.png",
-        dataset_color_map,
-    )
-    _plot_overlaid_single(
-        dist_metrics,
-        "Camera-to-Object Distance",
-        out_dir / "merged_cleveland_distance_cq_metrics.png",
-        dataset_color_map,
-    )
+    if args.with_plots:
+        _apply_ieee_font()
+        _plot_faceted(
+            scene_metrics,
+            "scene_type",
+            out_dir / "faceted_cleveland_scene_cq_metrics.png",
+        )
+        _plot_faceted(
+            dist_metrics,
+            "camera_to_object_distance",
+            out_dir / "faceted_cleveland_distance_cq_metrics.png",
+        )
+        _plot_overlaid_single(
+            scene_metrics,
+            "Scene Type",
+            out_dir / "merged_cleveland_scene_cq_metrics.png",
+            dataset_color_map,
+        )
+        _plot_overlaid_single(
+            dist_metrics,
+            "Camera-to-Object Distance",
+            out_dir / "merged_cleveland_distance_cq_metrics.png",
+            dataset_color_map,
+        )
 
     return 0
 

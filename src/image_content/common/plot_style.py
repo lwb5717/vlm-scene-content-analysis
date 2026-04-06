@@ -2,8 +2,6 @@ import re
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
-import matplotlib.pyplot as plt
-
 # Tableau-style qualitative palette with enough separation for small-to-medium category counts.
 QUALITATIVE_PALETTE = [
     "#4E79A7",
@@ -22,11 +20,13 @@ NEUTRAL_GREY = "#8C8C8C"
 
 
 def apply_serif_plot_style() -> None:
+    import matplotlib.pyplot as plt
+
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif"]
 
 
-def save_png(fig: plt.Figure, out_path: Path, pad_inches: float = 0.03, dpi: int = 300) -> None:
+def save_png(fig, out_path: Path, pad_inches: float = 0.03, dpi: int = 300) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path.with_suffix(".png"), dpi=dpi, bbox_inches="tight", pad_inches=pad_inches)
 
