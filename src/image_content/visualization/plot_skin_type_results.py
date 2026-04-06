@@ -20,7 +20,7 @@ DEFAULT_INPUTS = {
     "livewild": ROOT_DIR / "result" / "skin_type" / "livewild" / "skin_type_results_livewild.csv",
     "cid2013": ROOT_DIR / "result" / "skin_type" / "CID2013" / "skin_type_results_cid2013.csv",
 }
-DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "paper_figures" / "skin_type_analysis"
+DEFAULT_OUTPUT_DIR = ROOT_DIR / "result" / "plots" / "skin_type"
 
 ORDER = ["light", "medium", "dark", "uncertain"]
 TITLE_FONTSIZE = 22
@@ -192,19 +192,27 @@ def main() -> int:
     for name, path in zip(dataset_names, input_paths):
         counts_by_dataset[name] = _load_counts(path)
 
-    out_png = out_dir / "skin_type_distribution_all_datasets.png"
+    out_png = out_dir / "skin_type_distribution.png"
     _plot_grouped_bar(counts_by_dataset, out_png=out_png, show_zero_labels=True)
 
     summary = pd.DataFrame(counts_by_dataset).T.reindex(columns=ORDER)
     summary.index.name = "dataset"
     summary.reset_index().to_csv(
-        out_dir / "skin_type_counts_all_datasets.csv",
+        out_dir / "skin_type_counts.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+    percentages = summary.div(summary.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0) * 100.0
+    percentages.index.name = "dataset"
+    percentages.reset_index().to_csv(
+        out_dir / "skin_type_percentages.csv",
         index=False,
         encoding="utf-8-sig",
     )
 
     print(f"Saved plot to {out_png}")
-    print(f"Saved counts to {out_dir / 'skin_type_counts_all_datasets.csv'}")
+    print(f"Saved counts to {out_dir / 'skin_type_counts.csv'}")
+    print(f"Saved percentages to {out_dir / 'skin_type_percentages.csv'}")
     return 0
 
 
