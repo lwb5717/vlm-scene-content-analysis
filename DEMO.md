@@ -10,10 +10,6 @@ The sample outputs below come from the curated `CID2013` example.
 
 ![Scene distribution](examples/sample_outputs/cid2013/figures/scene_type_distribution.png)
 
-### Complexity Distribution
-
-![Complexity distribution](examples/sample_outputs/cid2013/figures/complexity_9_levels.png)
-
 ### Skin-Type Distribution
 
 ![Skin-type distribution](examples/sample_outputs/cid2013/figures/skin_type_distribution.png)
@@ -29,7 +25,8 @@ This folder contains:
 - `scene_analysis_results.csv`
 - `complexity_results.csv`
 - `skin_type_results.csv`
-- example figures for scene, complexity, and skin-type analysis
+- example figures for scene and skin-type analysis
+- complexity CSV outputs for downstream statistics or custom plotting
 
 You can also inspect the text summary:
 

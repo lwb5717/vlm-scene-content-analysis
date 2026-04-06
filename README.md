@@ -21,10 +21,6 @@ Start here if you want the fastest overview:
 
 ![Scene distribution](examples/sample_outputs/cid2013/figures/scene_type_distribution.png)
 
-#### Complexity Distribution
-
-![Complexity distribution](examples/sample_outputs/cid2013/figures/quantity_level_distribution.png)
-
 #### Skin-Type Distribution
 
 ![Skin-type distribution](examples/sample_outputs/cid2013/figures/skin_type_distribution.png)
@@ -55,7 +51,7 @@ Start here if you want the fastest overview:
 - `examples/sample_outputs/`
   small example outputs kept for GitHub display
 - `result/paper_figures/`
-  selected paper-facing figures
+  selected paper-facing CSV/PNG assets
 
 ## Setup
 

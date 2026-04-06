@@ -16,8 +16,9 @@ This folder is intentionally selective. It is not a full dump of all local exper
 - `complexity_results.csv`: visual complexity output
 - `skin_type_results.csv`: skin type analysis output
 - `figures/scene_type_distribution.png`: example scene distribution figure
-- `figures/complexity_9_levels.png`: example complexity figure
 - `figures/skin_type_distribution.png`: example skin-type figure
 - `figures/semantic_summary.txt`: example text summary generated from scene analysis
+
+The curated sample keeps the complexity output as CSV so users can inspect the labels directly or make their own plots.
 
 If you run the scripts on your own image directory, you should obtain outputs with the same overall structure, although the exact labels and distributions will depend on the dataset, model version, and prompt version.
