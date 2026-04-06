@@ -280,7 +280,6 @@ def main() -> int:
             "semantic_complexity": df["semantic_complexity"],
         }
     )
-    pca_coordinates.to_csv(out_dir / "pca_coordinates.csv", index=False, encoding="utf-8-sig")
     explained_variance = pd.DataFrame(
         {
             "component": ["PC1", "PC2"],
@@ -372,6 +371,16 @@ def main() -> int:
 
     kmeans = KMeans(n_clusters=args.k, random_state=42, n_init=10)
     cluster_labels = kmeans.fit_predict(scaled)
+    pca_coordinates["kmeans_cluster"] = cluster_labels
+    pca_coordinates.to_csv(out_dir / "pca_coordinates.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(
+        kmeans.cluster_centers_,
+        columns=vectors.columns,
+    ).assign(kmeans_cluster=lambda frame: range(len(frame))).to_csv(
+        out_dir / "kmeans_cluster_centroids.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
     _plot_scatter(points, cluster_labels, f"PCA with KMeans (k={args.k})", out_dir / "pca_kmeans.png")
 
     return 0

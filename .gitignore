@@ -8,6 +8,7 @@ env/
 .vscode/
 outputs/
 tmp/
+tmp_check/
 Test_data/
 
 # Large or local-only experimental outputs

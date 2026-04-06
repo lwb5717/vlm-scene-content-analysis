@@ -23,7 +23,7 @@ Start here if you want the fastest overview:
 
 #### Complexity Distribution
 
-![Complexity distribution](examples/sample_outputs/cid2013/figures/complexity_9_levels.png)
+![Complexity distribution](examples/sample_outputs/cid2013/figures/quantity_level_distribution.png)
 
 #### Skin-Type Distribution
 
@@ -122,6 +122,7 @@ These scripts correspond to analyses discussed in the manuscript and expect the 
 ```bash
 python scripts/run_spaq_validation.py
 python scripts/run_semantic_pca.py --input "result/scene_analysis_results_koniq10k.csv"
+python scripts/run_complexity_group_consistency.py --input "result/complexity_results_cid2013.csv"
 python scripts/plot_cq_cleveland.py
 ```
 
@@ -162,6 +163,7 @@ This repository now includes the executable code and retained figures for:
 - skin-type analysis
 - cross-dataset attribute plots
 - SPAQ validation
+- CID2013 complexity group-consistency analysis
 - semantic PCA exports and plots
 - CQ Cleveland plots
 
