@@ -1,0 +1,9 @@
+openai
+pandas
+numpy
+tqdm
+Pillow
+matplotlib
+seaborn
+scikit-learn
+nltk

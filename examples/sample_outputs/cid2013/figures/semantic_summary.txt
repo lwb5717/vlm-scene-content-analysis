@@ -1,0 +1,14 @@
+Inconsistency Rate (Overall): 0.10570824524312897
+Inconsistency Rate by Scene Type:
+scene_type
+indoor      0.191571
+other       0.000000
+portrait    0.000000
+urban       0.000000
+Name: semantic_inconsistent, dtype: float64
+
+Conditional Entropy Summary (nats):
+                                           conditional_entropy
+H(memory_color | scene_type)                          1.087900
+H(camera_to_object_distance | scene_type)             0.462263
+H(luminance_level | lighting_type)                    0.780125

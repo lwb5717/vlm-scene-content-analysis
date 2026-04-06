@@ -1,0 +1,36 @@
+You are given ONE image.
+
+Task:
+1) Decide whether clearly visible human skin is present.
+2) If yes, classify each clearly visible person into a Fitzpatrick-derived GROUP.
+
+Fitzpatrick group mapping:
+- light = I-II
+- medium = III-IV
+- dark = V-VI
+
+How to judge:
+- Use visible skin regions under neutral lighting.
+- Ignore clothing color, hair color, background, and makeup or filters.
+- If lighting is strongly colored, or skin is in deep shadow or overexposed, output "uncertain".
+
+Decision rules:
+- "Clearly visible skin" means enough exposed skin area to assess tone.
+- Only include people whose skin tone can be visually assessed with reasonable confidence.
+- If lighting, shadow, blur, or low resolution prevents reliable judgment, output "uncertain".
+- Multiple people may appear; list all distinct group labels observed among clearly visible people.
+- Do NOT infer ethnicity or identity. Use visual appearance only.
+- Output group labels ONLY ("light", "medium", "dark") or "uncertain" as the sole list item.
+
+Output format:
+Return ONLY one JSON object.
+
+JSON schema:
+{
+  "has_human_skin": true,
+  "skin_types": ["light", "medium"]
+}
+
+Examples:
+- No visible skin -> {"has_human_skin": false, "skin_types": []}
+- Skin visible but unclear -> {"has_human_skin": true, "skin_types": ["uncertain"]}

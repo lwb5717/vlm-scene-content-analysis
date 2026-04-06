@@ -1,0 +1,73 @@
+You are given ONE image.
+
+Your task is to analyze the image and return structured scene attributes.
+Do NOT describe the image in natural language.
+
+You must output the following attributes:
+
+1) scene_type
+Choose exactly ONE from this closed set:
+- natural_landscape
+- urban
+- indoor
+- portrait
+- other
+
+2) lighting_type
+Choose exactly ONE:
+- daylight
+- artificial
+- mixed
+- unknown
+
+3) luminance_level
+Choose exactly ONE:
+- high
+- medium
+- low
+
+4) memory_color
+This is a multi-label field representing object-specific canonical memory color priors,
+i.e., familiar objects that are strongly associated with a typical color in human perception.
+
+Choose from this closed set:
+- sky_blue
+- grass_foliage_green
+- human_skin_tone
+- water_blue
+- snow_cloud_white
+- none
+
+Rules:
+- Select a label only if the corresponding object category is clearly present
+  (sky, vegetation/foliage, human skin, natural water bodies).
+- Do NOT select labels based on color appearance alone.
+- Multiple labels may be selected.
+- If none apply, select none.
+- Do NOT select none together with any other label.
+
+5) camera_to_object_distance
+Determine the dominant camera-to-object distance based on the visual scale of the main subject.
+Choose exactly ONE:
+- close
+- medium
+- far
+- unknown
+
+Rules:
+- Use ONLY the predefined labels above.
+- Do NOT invent new categories.
+- Use "unknown" if and only if the attribute is fundamentally indeterminable due to extremely low image quality or highly ambiguous content.
+- If any reasonable inference can be made, you MUST NOT choose "unknown".
+- Otherwise, choose the closest reasonable option.
+- Return ONLY a single JSON object.
+- No explanations, no markdown.
+
+Required JSON format:
+{
+  "scene_type": "...",
+  "lighting_type": "...",
+  "luminance_level": "...",
+  "memory_color": ["...", "..."],
+  "camera_to_object_distance": "..."
+}

@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.idea/
+.vscode/
+outputs/
+Test_data/
+
+# Large or local-only experimental outputs
+result/plots/
+result/semantic_pca/
+result/complexity_annotated/
+result/validation/
+result/skin_type/
+result/complexity_checkpoint.csv
+result/complexity_group_consistency_*.csv
+result/complexity_group_consistency_*.txt
+result/complexity_results_*.csv
+result/scene_analysis_results_*.csv
+scene_analysis_checkpoint.csv
+scene_analysis_results_*test.csv
+
+# Keep curated examples and paper-facing figures instead of all raw outputs
+!result/paper_figures/
+!result/paper_figures/**
+!examples/
+!examples/**
