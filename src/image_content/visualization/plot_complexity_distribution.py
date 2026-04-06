@@ -57,23 +57,23 @@ def _build_level_counts(df: pd.DataFrame, column: str) -> pd.Series:
     return counts.reindex(LEVEL_ORDER, fill_value=0)
 
 
-def _save_table_bundle(counts: pd.Series, stem: str, csv_dir: Path, dataset_name: str) -> None:
+def _save_table_bundle(counts: pd.Series, stem: str, output_dir: Path, dataset_name: str) -> None:
     pct = counts / max(float(counts.sum()), 1.0) * 100.0
-    csv_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(
         {
             "dataset": dataset_name,
             "level": counts.index,
             "count": counts.astype(int).values,
         }
-    ).to_csv(csv_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
+    ).to_csv(output_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
     pd.DataFrame(
         {
             "dataset": dataset_name,
             "level": pct.index,
             "percentage": pct.round(4).values,
         }
-    ).to_csv(csv_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
+    ).to_csv(output_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
 
 
 def _plot_single_distribution(counts: pd.Series, dataset_name: str, title: str, out_path: Path) -> None:
@@ -161,14 +161,13 @@ def main() -> int:
         dataset_slug = slugify_label(dataset_name)
         dataset_dir = out_dir / dataset_slug
         dataset_dir.mkdir(parents=True, exist_ok=True)
-        csv_dir = dataset_dir / "csv"
 
         quantity_counts = _build_level_counts(df, "quantity_level")
         clutter_counts = _build_level_counts(df, "clutter_level")
         _plot_single_distribution(quantity_counts, dataset_name, "Quantity Level Distribution", dataset_dir / "quantity_level_distribution.png")
         _plot_single_distribution(clutter_counts, dataset_name, "Clutter Level Distribution", dataset_dir / "clutter_level_distribution.png")
-        _save_table_bundle(quantity_counts, "quantity_level_distribution", csv_dir, dataset_name)
-        _save_table_bundle(clutter_counts, "clutter_level_distribution", csv_dir, dataset_name)
+        _save_table_bundle(quantity_counts, "quantity_level_distribution", dataset_dir, dataset_name)
+        _save_table_bundle(clutter_counts, "clutter_level_distribution", dataset_dir, dataset_name)
 
         matrix = _build_joint_matrix(df)
         total = matrix.sum()

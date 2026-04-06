@@ -99,23 +99,23 @@ def _build_distribution_counts(
     return _normalize_counts(values, order)
 
 
-def _save_count_and_pct_tables(counts: pd.Series, stem: str, csv_dir: Path, dataset_name: str) -> None:
+def _save_count_and_pct_tables(counts: pd.Series, stem: str, output_dir: Path, dataset_name: str) -> None:
     pct = counts / max(float(counts.sum()), 1.0) * 100.0
-    csv_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(
         {
             "dataset": dataset_name,
             "category": counts.index,
             "count": counts.astype(int).values,
         }
-    ).to_csv(csv_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
+    ).to_csv(output_dir / f"{stem}_counts.csv", index=False, encoding="utf-8-sig")
     pd.DataFrame(
         {
             "dataset": dataset_name,
             "category": pct.index,
             "percentage": pct.round(4).values,
         }
-    ).to_csv(csv_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
+    ).to_csv(output_dir / f"{stem}_percentages.csv", index=False, encoding="utf-8-sig")
 
 
 def _build_crosstab(
@@ -142,7 +142,7 @@ def _save_crosstab_bundle(
     right_col: str,
     left_order: Iterable[str],
     right_order: Iterable[str],
-    csv_dir: Path,
+    output_dir: Path,
     explode_left: bool = False,
     explode_right: bool = False,
 ) -> None:
@@ -179,8 +179,8 @@ def _save_crosstab_bundle(
                 }
             )
 
-    csv_dir.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(csv_dir / f"{stem}.csv", index=False, encoding="utf-8-sig")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_dir / f"{stem}.csv", index=False, encoding="utf-8-sig")
 
 
 def _plot_single_distribution(
@@ -284,12 +284,11 @@ def main() -> int:
         dataset_slug = slugify_label(dataset_name)
         dataset_dir = out_dir / dataset_slug
         dataset_dir.mkdir(parents=True, exist_ok=True)
-        csv_dir = dataset_dir / "csv"
 
         for column, order, title, filename, explode_memory in plot_specs:
             counts = _build_distribution_counts(df, column, order, explode_memory=explode_memory)
             _plot_single_distribution(counts, dataset_name, title, dataset_dir / filename)
-            _save_count_and_pct_tables(counts, filename.replace(".png", ""), csv_dir, dataset_name)
+            _save_count_and_pct_tables(counts, filename.replace(".png", ""), dataset_dir, dataset_name)
 
         _save_crosstab_bundle(
             df,
@@ -299,7 +298,7 @@ def main() -> int:
             "luminance_level",
             LIGHTING_TYPE_ORDER,
             LUMINANCE_LEVEL_ORDER,
-            csv_dir,
+            dataset_dir,
         )
         _save_crosstab_bundle(
             df,
@@ -309,7 +308,7 @@ def main() -> int:
             "camera_to_object_distance",
             SCENE_TYPE_ORDER,
             CAMERA_DISTANCE_ORDER,
-            csv_dir,
+            dataset_dir,
         )
         _save_crosstab_bundle(
             df,
@@ -319,7 +318,7 @@ def main() -> int:
             "memory_color",
             SCENE_TYPE_ORDER,
             MEMORY_COLOR_ORDER,
-            csv_dir,
+            dataset_dir,
             explode_right=True,
         )
         _save_crosstab_bundle(
@@ -330,7 +329,7 @@ def main() -> int:
             "luminance_level",
             MEMORY_COLOR_ORDER,
             LUMINANCE_LEVEL_ORDER,
-            csv_dir,
+            dataset_dir,
             explode_left=True,
         )
 
