@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png
+
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 DEFAULT_INPUTS = {
@@ -39,10 +41,6 @@ DATASET_DISPLAY_MAP = {
     "cid2013": "CID2013",
 }
 
-# Neutral, publication-friendly palette (distinct, colorblind-safe leaning).
-SKIN_TONE_COLORS = ["#4E79A7", "#59A14F", "#F28E2B", "#B07AA1"]
-
-
 def _pretty_label(value: str) -> str:
     return str(value).replace("_", " ")
 
@@ -53,14 +51,11 @@ def _dataset_display_name(value: str) -> str:
 
 
 def _apply_ieee_font() -> None:
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif"]
+    apply_serif_plot_style()
 
 
 def _save_figure(fig: plt.Figure, out_path: Path) -> None:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.02)
-    fig.savefig(out_path.with_suffix(".pdf"), format="pdf", bbox_inches="tight", pad_inches=0.02)
+    save_png(fig, out_path, pad_inches=0.02)
 
 
 def _parse_skin_types(value: str) -> List[str]:
@@ -98,6 +93,7 @@ def _plot_grouped_bar(
     show_zero_labels: bool = True,
 ) -> None:
     dataset_names = list(counts_by_dataset.keys())
+    dataset_colors = get_palette(len(dataset_names))
 
     count_table = pd.DataFrame(index=dataset_names, columns=ORDER, dtype=float).fillna(0)
     for name in dataset_names:
@@ -107,7 +103,6 @@ def _plot_grouped_bar(
 
     x = np.arange(len(ORDER))
     width = 0.8 / max(len(dataset_names), 1)
-    colors = [SKIN_TONE_COLORS[i % len(SKIN_TONE_COLORS)] for i in range(len(dataset_names))]
 
     fig, ax = plt.subplots(figsize=(7.8, 4.2))
     for i, name in enumerate(dataset_names):
@@ -116,7 +111,7 @@ def _plot_grouped_bar(
             offsets,
             pct_table.loc[name],
             width=width,
-            color=colors[i],
+            color=dataset_colors[i],
             label=_dataset_display_name(name),
         )
         for bar, count in zip(bars, count_table.loc[name]):

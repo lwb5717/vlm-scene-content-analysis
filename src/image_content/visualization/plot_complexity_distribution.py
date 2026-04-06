@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from image_content.common.plot_style import apply_serif_plot_style, get_palette, save_png
+
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 DEFAULT_INPUTS = {
@@ -17,7 +19,6 @@ DEFAULT_INPUTS = {
 }
 
 LEVEL_ORDER = ["low", "medium", "high"]
-DATASET_COLORS = ["#4E79A7", "#F28E2B", "#59A14F", "#B07AA1", "#76B7B2", "#E15759"]
 TITLE_FONTSIZE = 18
 LABEL_FONTSIZE = 14
 TICK_FONTSIZE = 12
@@ -26,14 +27,11 @@ COUNT_FONTSIZE = 9
 
 
 def _apply_plot_style() -> None:
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif"]
+    apply_serif_plot_style()
 
 
 def _save_figure(fig: plt.Figure, out_path: Path) -> None:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.03)
-    fig.savefig(out_path.with_suffix(".pdf"), format="pdf", bbox_inches="tight", pad_inches=0.03)
+    save_png(fig, out_path, pad_inches=0.03)
 
 
 def _pretty_label(value: object) -> str:
@@ -80,6 +78,7 @@ def _plot_grouped_distribution(count_table: pd.DataFrame, title: str, out_path: 
     dataset_names = list(count_table.index)
     x = np.arange(len(LEVEL_ORDER), dtype=float)
     width = 0.8 / max(1, len(dataset_names))
+    dataset_colors = get_palette(len(dataset_names))
 
     fig, ax = plt.subplots(figsize=(7.0, 4.2))
     for idx, name in enumerate(dataset_names):
@@ -88,7 +87,7 @@ def _plot_grouped_distribution(count_table: pd.DataFrame, title: str, out_path: 
             offsets,
             pct_table.loc[name],
             width=width,
-            color=DATASET_COLORS[idx % len(DATASET_COLORS)],
+            color=dataset_colors[idx],
             label=name,
         )
         for bar, count in zip(bars, count_table.loc[name]):

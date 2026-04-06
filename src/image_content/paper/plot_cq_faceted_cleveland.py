@@ -20,6 +20,12 @@ from matplotlib import colors as mcolors
 from matplotlib.lines import Line2D
 import matplotlib.patheffects as pe
 
+from image_content.common.plot_style import (
+    NEUTRAL_GREY,
+    build_color_map,
+    save_png,
+)
+
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 DATASET_CONFIG = {
@@ -68,12 +74,6 @@ GROUP_TITLE_MAP = {
     "scene_type": "Scene Type",
     "camera_to_object_distance": "Camera-to-Object Distance",
 }
-DATASET_COLORS = {
-    "SPAQ": "#4E79A7",
-    "KonIQ-10K": "#F28E2B",
-    "LIVE Wild": "#59A14F",
-    "CID2013": "#B07AA1",
-}
 MEAN_LABEL = r"$\mathbb{E}[CQ]$ (norm)"
 ENTROPY_LABEL = "H(CQ) (norm)"
 
@@ -84,9 +84,7 @@ def _apply_ieee_font() -> None:
 
 
 def _save_figure(fig: plt.Figure, out_path: Path) -> None:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=300)
-    fig.savefig(out_path.with_suffix(".pdf"), format="pdf")
+    save_png(fig, out_path, pad_inches=0.02)
 
 
 def _normalize_image_name(value: str) -> str:
@@ -343,6 +341,7 @@ def _plot_overlaid_single(
     metric_tables: Dict[str, pd.DataFrame],
     group_title: str,
     out_path: Path,
+    dataset_color_map: Dict[str, str],
 ) -> None:
     dataset_names = list(metric_tables.keys())
     fig, ax = plt.subplots(figsize=(9.0, 5.2))
@@ -370,7 +369,7 @@ def _plot_overlaid_single(
         y = y_base + ds_offsets[i]
         has_data = t["n"] > 0
         missing = ~has_data
-        ds_color = DATASET_COLORS.get(ds, "#4E79A7")
+        ds_color = dataset_color_map.get(ds, NEUTRAL_GREY)
         mean_color = _shade_dataset_color(ds_color, "mean")
         ent_color = _shade_dataset_color(ds_color, "ent")
         ent_edge_color = _shade_dataset_color(ds_color, "ent_edge")
@@ -472,7 +471,7 @@ def _plot_overlaid_single(
             [0],
             marker="o",
             markerfacecolor="white",
-            markeredgecolor=DATASET_COLORS.get(ds, "#4E79A7"),
+            markeredgecolor=dataset_color_map.get(ds, NEUTRAL_GREY),
             markeredgewidth=1.5,
             color="none",
             linestyle="None",
@@ -571,6 +570,8 @@ def main() -> int:
     scene_distributions: List[pd.DataFrame] = []
     dist_distributions: List[pd.DataFrame] = []
     metric_rows: List[pd.DataFrame] = []
+    dataset_color_map = build_color_map(DATASET_CONFIG.keys())
+
     for dataset_name, df in merged_by_dataset.items():
         scene_metrics[dataset_name] = _group_metrics(df, "scene_type", SCENE_ORDER)
         dist_metrics[dataset_name] = _group_metrics(df, "camera_to_object_distance", DISTANCE_ORDER)
@@ -632,11 +633,13 @@ def main() -> int:
         scene_metrics,
         "Scene Type",
         out_dir / "merged_cleveland_scene_cq_metrics.png",
+        dataset_color_map,
     )
     _plot_overlaid_single(
         dist_metrics,
         "Camera-to-Object Distance",
         out_dir / "merged_cleveland_distance_cq_metrics.png",
+        dataset_color_map,
     )
 
     return 0

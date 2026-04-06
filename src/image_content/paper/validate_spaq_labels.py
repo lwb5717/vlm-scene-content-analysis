@@ -10,6 +10,8 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from image_content.common.plot_style import save_png
+
 ROOT_DIR = Path(__file__).resolve().parents[3]
 RESULTS_CSV = ROOT_DIR / "result" / "scene_analysis_results_spaq.csv"
 LABELS_XLSX = ROOT_DIR / "Scene category labels.xlsx"
@@ -107,9 +109,7 @@ def _score_binary(pred: pd.Series, label: pd.Series) -> Dict[str, float]:
 
 
 def _save_figure(fig: plt.Figure, out_path: Path) -> None:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=300, bbox_inches="tight")
-    fig.savefig(out_path.with_suffix(".pdf"), format="pdf", bbox_inches="tight")
+    save_png(fig, out_path, pad_inches=0.02)
 
 
 def main() -> None:

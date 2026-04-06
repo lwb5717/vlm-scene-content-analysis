@@ -16,6 +16,13 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+from image_content.common.plot_style import (
+    NEUTRAL_GREY,
+    build_color_map,
+    get_palette,
+    save_png,
+)
+
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DATASET_NAME = "koniq10k"
 INPUT_CSV = ROOT_DIR / "result" / f"scene_analysis_results_{DATASET_NAME}.csv"
@@ -45,37 +52,6 @@ MEMORY_COLORS = [
     "snow_cloud_white",
     "none",
 ]
-
-SCENE_TYPE_COLORS = {
-    "natural_landscape": "#4C72B0",
-    "urban": "#55A868",
-    "indoor": "#C44E52",
-    "portrait": "#8172B2",
-    "other": "#CCB974",
-    "unknown": "#8C8C8C",
-}
-LIGHTING_TYPE_COLORS = {
-    "daylight": "#4C72B0",
-    "artificial": "#DD8452",
-    "mixed": "#55A868",
-    "unknown": "#8C8C8C",
-}
-CAMERA_DISTANCE_COLORS = {
-    "close": "#4C72B0",
-    "medium": "#55A868",
-    "far": "#DD8452",
-    "unknown": "#8C8C8C",
-}
-MEMORY_COLOR_COLORS = {
-    "sky_blue": "#4C72B0",
-    "grass_foliage_green": "#55A868",
-    "human_skin_tone": "#C44E52",
-    "water_blue": "#8172B2",
-    "snow_cloud_white": "#9E9E9E",
-    "none": "#8C8C8C",
-    "multi": "#CCB974",
-}
-
 
 def _apply_plot_style() -> None:
     plt.rcParams["font.weight"] = "bold"
@@ -191,7 +167,7 @@ def _plot_scatter(
             legend_labels = list(dict.fromkeys(labels_str.tolist()))
             handles = [
                 Line2D([0], [0], marker="o", color="w", label=label,
-                       markerfacecolor=color_map.get(label, "#8C8C8C"), markersize=PLOT_LEGEND_MARKERSIZE)
+                       markerfacecolor=color_map.get(label, NEUTRAL_GREY), markersize=PLOT_LEGEND_MARKERSIZE)
                 for label in legend_labels
             ]
             legend = ax.legend(
@@ -226,8 +202,7 @@ def _plot_scatter(
     for lbl in ax.get_xticklabels() + ax.get_yticklabels():
         lbl.set_fontweight("bold")
     fig.tight_layout(pad=0.2)
-    fig.savefig(out_path, dpi=300, bbox_inches="tight")
-    fig.savefig(out_path.with_suffix(".pdf"), format="pdf", bbox_inches="tight")
+    save_png(fig, out_path, pad_inches=0.02)
     plt.close(fig)
 
 
@@ -334,6 +309,26 @@ def main() -> int:
     )
     top_contributors.to_csv(out_dir / "pca_top_contributors.csv", index=False, encoding="utf-8-sig")
 
+    scene_color_map = build_color_map(
+        df["scene_type"].fillna("unknown").astype(str),
+        preferred_order=SCENE_TYPES + ["unknown"],
+        overrides={"unknown": NEUTRAL_GREY},
+    )
+    lighting_color_map = build_color_map(
+        df["lighting_type"].fillna("unknown").astype(str),
+        preferred_order=LIGHTING_TYPES + ["unknown"],
+        overrides={"unknown": NEUTRAL_GREY},
+    )
+    distance_color_map = build_color_map(
+        df["camera_to_object_distance"].fillna("unknown").astype(str),
+        preferred_order=CAMERA_DISTANCES + ["unknown"],
+        overrides={"unknown": NEUTRAL_GREY},
+    )
+    memory_color_map = build_color_map(
+        df["memory_color_label"].fillna("none").astype(str),
+        preferred_order=MEMORY_COLORS + ["multi"],
+        overrides={"none": NEUTRAL_GREY, "unknown": NEUTRAL_GREY},
+    )
 
     if args.color_by == "scene_type":
         labels = df["scene_type"].fillna("unknown")
@@ -342,7 +337,7 @@ def main() -> int:
             labels,
             "Semantic PCA (colored by scene_type)",
             out_dir / "pca_scene_type.png",
-            color_map=SCENE_TYPE_COLORS,
+            color_map=scene_color_map,
         )
     else:
         labels = df["semantic_complexity"]
@@ -358,21 +353,21 @@ def main() -> int:
         df["lighting_type"].fillna("unknown"),
         "Semantic PCA (colored by lighting_type)",
         out_dir / "pca_lighting_type.png",
-        color_map=LIGHTING_TYPE_COLORS,
+        color_map=lighting_color_map,
     )
     _plot_scatter(
         points,
         df["camera_to_object_distance"].fillna("unknown"),
         "Semantic PCA (colored by camera_to_object_distance)",
         out_dir / "pca_camera_distance.png",
-        color_map=CAMERA_DISTANCE_COLORS,
+        color_map=distance_color_map,
     )
     _plot_scatter(
         points,
         df["memory_color_label"].fillna("none"),
         "Semantic PCA (colored by memory_color)",
         out_dir / "pca_memory_color.png",
-        color_map=MEMORY_COLOR_COLORS,
+        color_map=memory_color_map,
     )
 
     kmeans = KMeans(n_clusters=args.k, random_state=42, n_init=10)
