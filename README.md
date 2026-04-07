@@ -1,4 +1,4 @@
-# Image Content Analysis
+# vlm-scene-content-analysis
 
 Run a vision-language model on your own image dataset, export structured CSV results, and optionally generate basic figures from those results.
 
